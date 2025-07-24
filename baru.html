@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AI SMK</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      font-family: 'Nunito', sans-serif;
+      box-sizing: border-box;
+      transition: all 0.3s ease-in-out;
+    }
+
+    body {
+      background: url('https://i.postimg.cc/3RnhVzkS/Screenshot-20250724-181138-Gallery.jpg') no-repeat center center fixed;
+      background-size: cover;
+      overflow-x: hidden;
+    }
+
+    .chat-container,
+    .option-page {
+      max-width: 500px;
+      margin: 80px auto 100px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 1s ease-in-out;
+      backdrop-filter: blur(4px);
+    }
+
+    .title {
+      text-align: center;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: #1f3ca6;
+    }
+
+    .chat-box {
+      max-height: 400px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .msg {
+      padding: 12px 16px;
+      border-radius: 16px;
+      max-width: 80%;
+      font-size: 16px;
+      animation: slideUp 0.3s ease-in-out;
+    }
+
+    .user {
+      align-self: flex-end;
+      background-color: rgba(255, 255, 255, 0.7);
+    }
+
+    .bot {
+      align-self: flex-start;
+      background-color: rgba(240, 240, 240, 0.7);
+    }
+
+    .input-area {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      width: 90%;
+      max-width: 500px;
+      gap: 10px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      padding: 14px;
+      border-radius: 12px;
+      border: 2px solid #ccc;
+      outline: none;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 14px 20px;
+      border: none;
+      background-color: #3c70ff;
+      color: white;
+      font-weight: bold;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #244de4;
+    }
+
+    .switch-page-btn {
+      display: block;
+      margin: 30px auto 0;
+      padding: 12px 24px;
+      background-color: #1f3ca6;
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    #infoText {
+      white-space: pre-wrap;
+      color: white;
+      font-size: 16px;
+      line-height: 1.8;
+      padding: 10px;
+      background-color: rgba(0,0,0,0.5);
+      border-radius: 14px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes typing {
+      from { width: 0 }
+      to { width: 100% }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Halaman Utama -->
+  <div id="mainPage" class="chat-container">
+    <div class="title">🤖 AI SMK 🤖</div>
+    <div class="chat-box" id="chat-box"></div>
+    <button class="switch-page-btn" onclick="showOptions()">Opsi Pertanyaan</button>
+  </div>
+
+  <div class="input-area" id="input-area">
+    <input type="text" id="userInput" placeholder="Tanyakan: Siapa absen nomor 1..." />
+    <button onclick="sendMessage()">Kirim</button>
+  </div>
+
+  <!-- Halaman Opsi -->
+  <div id="optionPage" class="option-page hidden"></div>
+
+  <script>
+    const chatBox = document.getElementById('chat-box');
+    const input = document.getElementById('userInput');
+    const daftarAbsen = {
+      1: "Iwan", 2: "Andi", 3: "Irfan", 4: "Budi", 5: "Rani", 6: "Joko",
+      7: "Dina", 8: "Rizky", 9: "Fajar", 10: "Tina", 11: "Danu", 12: "Putri",
+      13: "Yoga", 14: "Lina", 15: "Hadi", 16: "Farah", 17: "Agus", 18: "Mega",
+      19: "Rico", 20: "Ali", 21: "Rian", 22: "Zahra", 23: "Sa'ad", 24: "Bayu",
+      25: "Rado", 26: "Aldi", 27: "Lukman", 28: "Vina", 29: "Iqbal", 30: "Dita",
+      31: "Eka", 32: "Yusuf", 33: "Anisa", 34: "Rafael", 35: "Wulan"
+    };
+
+    function sendMessage() {
+      const question = input.value.trim();
+      if (!question) return;
+
+      addMessage('user', question);
+      let jawaban = "Maaf, saya tidak tahu.";
+
+      const regex = /absen\s+nomor\s+(\d+)/i;
+      const match = question.match(regex);
+      if (match) {
+        const no = parseInt(match[1]);
+        jawaban = daftarAbsen[no] ? `Nomor absen ${no} adalah ${daftarAbsen[no]}` : `Tidak ada data untuk absen nomor ${no}`;
+      }
+
+      setTimeout(() => addMessage('bot', jawaban), 500);
+      input.value = "";
+    }
+
+    function addMessage(type, text) {
+      const msg = document.createElement('div');
+      msg.className = `msg ${type}`;
+      msg.textContent = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function showOptions() {
+      document.getElementById("mainPage").classList.add("hidden");
+      document.getElementById("input-area").classList.add("hidden");
+
+      document.body.style.background = "url('https://i.postimg.cc/QCMwRt7w/0958e43a84e452b6d813da2cd2c33d3f.jpg') no-repeat center center fixed";
+      document.body.style.backgroundSize = "cover";
+
+      const optionPage = document.getElementById("optionPage");
+      optionPage.classList.remove("hidden");
+
+      optionPage.innerHTML = `
+        <div class="title">📋 PANDUAN PERTANYAAN 📋</div>
+        <div id="infoText"></div>
+        <button class="switch-page-btn" onclick="goBack()">🔙 Balik ke Halaman Sebelumnya</button>
+      `;
+
+      const fullText = `
+ANDA HANYA BISA MENANYAKAN PERTANYAAN  DI AI INI ADALAH.
+
+1. NOMOR ABSEN SISWA/SISWI
+[CARA MENGGUNAKAN NYA ADALAH]
+CONTOH: siapa nomor absen.....
+
+⚠️ WAJIB MENGGUNAKAN KATA siapa nomor absen ⚠️
+
+2. NAMA NAMA GURU YANG ADA DI MATERI.
+[CARA MENGGUNAKANNYA ADALAH]
+CONTOH: siapa nama guru....
+
+⚠️ WAJIB MENGGUNAKAN KATA siapa nama guru ⚠️
+      `;
+      typeText(document.getElementById("infoText"), fullText, 20);
+    }
+
+    function goBack() {
+      document.getElementById("mainPage").classList.remove("hidden");
+      document.getElementById("input-area").classList.remove("hidden");
+      document.getElementById("optionPage").classList.add("hidden");
+
+      document.body.style.background = "url('https://i.postimg.cc/3RnhVzkS/Screenshot-20250724-181138-Gallery.jpg') no-repeat center center fixed";
+      document.body.style.backgroundSize = "cover";
+    }
+
+    function typeText(element, text, speed) {
+      element.textContent = "";
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          element.textContent += text.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        }
+      }
+      type();
+    }
+  </script>
+</body>
+</html>
